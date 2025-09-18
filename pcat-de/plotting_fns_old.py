@@ -705,17 +705,17 @@ def plot_fc_median_std(fourier_coeffs, imsz, ref_img=None, bkg_samples=None, fou
 
 		plt.subplot(1,3,1)
 		plt.title('Data', fontsize=14)
-		plt.imshow(ref_img/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(ref_img, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(ref_img, 85)/convert_to_MJy_sr_fac)
+		plt.imshow(ref_img/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(ref_img, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(ref_img, 99)/convert_to_MJy_sr_fac)
 		cb = plt.colorbar(orientation='vertical', pad=0.04, fraction=0.046)
 		cb.set_label(xlabel_unit)
 		plt.subplot(1,3,2)
 		plt.title('Median background model', fontsize=14)
-		plt.imshow(mean_fc_temp/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(mean_fc_temp, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(mean_fc_temp, 85)/convert_to_MJy_sr_fac)
+		plt.imshow(mean_fc_temp/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(mean_fc_temp, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(mean_fc_temp, 99)/convert_to_MJy_sr_fac)
 		cb = plt.colorbar(orientation='vertical', pad=0.04, fraction=0.046)
 		cb.set_label(xlabel_unit)		
 		plt.subplot(1,3,3)
 		plt.title('Data - median background model', fontsize=14)
-		plt.imshow((ref_img - mean_fc_temp)/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(ref_img, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(ref_img, 85)/convert_to_MJy_sr_fac)
+		plt.imshow((ref_img - mean_fc_temp)/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(ref_img, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(ref_img, 97)/convert_to_MJy_sr_fac)
 		cb = plt.colorbar(orientation='vertical', pad=0.04, fraction=0.046)
 		cb.set_label(xlabel_unit)
 
@@ -723,11 +723,11 @@ def plot_fc_median_std(fourier_coeffs, imsz, ref_img=None, bkg_samples=None, fou
 
 		plt.subplot(1,2,1)
 		plt.title('Median'+xlabel_unit)
-		plt.imshow(mean_fc_temp/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(mean_fc_temp, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(mean_fc_temp, 75)/convert_to_MJy_sr_fac)
+		plt.imshow(mean_fc_temp/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(mean_fc_temp, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(mean_fc_temp, 95)/convert_to_MJy_sr_fac)
 		plt.colorbar(pad=0.04)
 		plt.subplot(1,2,2)
 		plt.title('Standard deviation'+xlabel_unit)
-		plt.imshow(std_fc_temp/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(std_fc_temp, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(std_fc_temp, 75)/convert_to_MJy_sr_fac)
+		plt.imshow(std_fc_temp/convert_to_MJy_sr_fac, origin='lower', cmap='Greys', interpolation=None, vmin=np.percentile(std_fc_temp, 5)/convert_to_MJy_sr_fac, vmax=np.percentile(std_fc_temp, 95)/convert_to_MJy_sr_fac)
 		plt.colorbar(pad=0.04)
 
 	plt.tight_layout()
@@ -1022,7 +1022,7 @@ def plot_posterior_flux_dist(logSv, raw_number_counts, band='250 micron', title=
 
 
 def plot_residual_map(resid, mode='median', band='S', titlefontsize=14, smooth=True, smooth_sigma=3, \
-					show=False, plot_refcat=False, convert_to_MJy_sr_fac=None, minpct=0, maxpct=100): #change back to 5 and 95 when done
+					show=False, plot_refcat=False, convert_to_MJy_sr_fac=None, minpct=5, maxpct=95):
 
 
 	# TODO - overplot reference catalog on image

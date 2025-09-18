@@ -157,10 +157,10 @@ def psf_smooth_templates(templates, psf_sigmas=[1.27, 1.27, 1.27]):
     smoothed_ts : Smoothed templates
     
     """
-	smoothed_ts = []
-	for i, template in enumerate(templates):
-		smoothed_ts.append(gaussian_filter(template, sigma=psf_sigmas[i]))
-	return smoothed_ts
+    smoothed_ts = []
+    for i, template in enumerate(templates):
+        smoothed_ts.append(gaussian_filter(template, sigma=psf_sigmas[i]))
+    return smoothed_ts
 
 
 

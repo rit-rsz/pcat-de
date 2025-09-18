@@ -7,17 +7,15 @@ from types import ModuleType
 
 # in order for visual=True to work, interactive backend should be loaded before importing pyplot
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('TkAgg')
 
 import matplotlib.pyplot as plt
 import time
 import os
 import sys
-import pcat_config
+import config
 import params
 import warnings
-from pcat_load_data import load_param_dict
-from pcat_load_data import pcat_data
 import scipy.stats as stats
 from scipy.ndimage import gaussian_filter
 
@@ -29,7 +27,7 @@ from pcat_utils import *
 from plotting_fns import *
 from fourier_bkg_modl import *
 from diffuse_gen import *
-# from pcat_blas_routines import *
+from pcat_blas_routines import *
 from posterior_results import *
 
 # init_seed = 20230618
@@ -101,7 +99,7 @@ def neighbours(x,y,neigh,i,generate=False):
 		return neighbours
 
 def get_region(x, offsetx, regsize):
-	return (np.floor(x + offsetx).astype(int) / regsize).astype(int)
+	return (np.floor(x + offsetx).astype(np.int) / regsize).astype(np.int)
 
 def idx_parity(x, y, n, offsetx, offsety, parity_x, parity_y, regsize):
 	match_x = (get_region(x[0:n], offsetx, regsize) % 2) == parity_x
@@ -282,7 +280,7 @@ class Model:
 		self.imsz0 = gdat.imsz0 # this is just for first band, where proposals are first made
 		self.imszs = gdat.imszs # this is list of image sizes for all bands, not just first one
 		self.kickrange = gdat.kickrange
-		self.margins = np.zeros(gdat.nbands).astype(int)
+		self.margins = np.zeros(gdat.nbands).astype(np.int)
 		self.max_nsrc = gdat.max_nsrc
 		self.bkg = np.array(gdat.bkg_level)
 
@@ -310,8 +308,7 @@ class Model:
 
 		for i, key in enumerate(self.gdat.template_order):
 			for b, band in enumerate(gdat.bands):
-				if self.init_template_amplitude_dicts is not None:
-					self.template_amplitudes[i][b] = self.init_template_amplitude_dicts[key][gdat.band_dict[band]]
+				self.template_amplitudes[i][b] = self.init_template_amplitude_dicts[key][gdat.band_dict[band]]
 		
 		# if self.gdat.float_cib_templates:
 		# 	self.coarse_cib_templates = self.gdat.coarse_cib_templates
@@ -361,14 +358,14 @@ class Model:
 		self.nloop = gdat.nloop
 		self.nominal_nsrc = gdat.nominal_nsrc
 		self.nregion = gdat.nregion
-		self.offsetxs = np.zeros(self.nbands).astype(int)
-		self.offsetys = np.zeros(self.nbands).astype(int)
+		self.offsetxs = np.zeros(self.nbands).astype(np.int)
+		self.offsetys = np.zeros(self.nbands).astype(np.int)
 		
 		self.penalty = (2.+gdat.nbands)*0.5*gdat.alph
 		verbprint(self.gdat.verbtype, 'Parsimony prior is set to dlogP = '+str(np.round(self.penalty, 1))+' per source..', verbthresh=1)
 
 		self.regions_factor = gdat.regions_factor
-		self.regsizes = np.array(gdat.regsizes).astype(int)
+		self.regsizes = np.array(gdat.regsizes).astype(np.int)
 		
 		self.stars = np.zeros((2+gdat.nbands,gdat.max_nsrc), dtype=np.float32)
 		self.stars[:,0:self.n] = np.random.uniform(size=(2+gdat.nbands,self.n))
@@ -444,7 +441,7 @@ class Model:
 			flux_prior_type = self.gdat.flux_prior_type
 
 		if flux_prior_type=='double_power_law':
-			verbprint(self.gdat.verbtype, 'Using double power law flux prior: a1, a2 =' + str(self.alpha_1) + ',' + str(self.alpha_2), verbthresh=1)
+			verbprint(self.gdat.verbtype, 'Using double power law flux prior: a1, a2 = '+str(self.alpha_1), +', '+str(self.alpha_2), verbthresh=1)
 			self.stars[self._F+b,0:self.n] = icdf_dpow(self.stars[self._F+b,0:self.n],\
 														 self.trueminf, self.trueminf*self.newsrc_minmax_range, \
 														 self.pivot_dpl, self.alpha_1, self.alpha_2)
@@ -463,7 +460,7 @@ class Model:
 
 		catpath = self.gdat.result_basedir+self.gdat.load_state_timestr+'/final_state.npz'
 		catload = np.load(catpath)
-		gdat_previous, param_filepath = load_param_dict(timestr=self.gdat.load_state_timestr, result_dir=self.gdat.result_basedir)
+		gdat_previous, param_filepath = load_param_dict(self.gdat.load_state_timestr, result_basedir=self.gdat.result_basedir)
 		previous_cat = catload['cat']
 
 		self.n = np.count_nonzero(previous_cat[self._F,:])
@@ -473,7 +470,7 @@ class Model:
 		
 		if self.gdat.float_templates:
 			print('self template amplitudes is ', self.template_amplitudes)
-			if gdat_previous.nbands == self.gdat.nbands:
+			if gdat_previous.nbands == gdat.nbands:
 				self.template_amplitudes=catload['templates']
 			else:
 				for t in range(self.gdat.n_templates):
@@ -483,14 +480,14 @@ class Model:
 		if self.gdat.float_fourier_comps:
 			self.gdat.fourier_coeffs = catload['fourier_coeffs']
 
-		if gdat_previous.nbands == self.gdat.nbands:
+		if gdat_previous.nbands == gdat.nbands:
 			print('Same number of bands, setting catalog equal to previous catalog..')
 			self.stars = previous_cat
 		else:
 			print('Different number of bands between previous and current run, drawing colors for remaining bands..')
 			self.stars[self._X,:] = previous_cat[self._X,:]
 			self.stars[self._Y,:] = previous_cat[self._Y,:]
-			for b in range(self.gdat.nbands):
+			for b in range(gdat.nbands):
 				if gdat_previous.nbands > b:
 					self.stars[self._F+b,:] = previous_cat[self._F+b,:]
 				else:
@@ -696,7 +693,7 @@ class Model:
 				else:
 					dtemp += pc_temp
 
-			#dfc not None means float fourier component
+
 			elif dfc is not None:
 
 				if idxvecs is not None:
@@ -743,7 +740,7 @@ class Model:
 			dmodel, diff2 = image_model_eval(xp, yp, beam_fac[b]*nc[b]*f[b], bkg[b], self.imszs[b], \
 											nc[b], np.array(cf[b]).astype(np.float32()), weights=self.dat.weights[b], \
 											ref=ref[b], lib=lib, regsize=self.regsizes[b], \
-											margin=self.margins[b]*margin_fac, offsetx=self.offsetxs[b], offsety=self.offsetys[b], template=dtemp, rtype=rtype)
+											margin=self.margins[b]*margin_fac, offsetx=self.offsetxs[b], offsety=self.offsetys[b], template=dtemp)
 			
 			if nb==0:
 				diff2s = diff2
@@ -1664,13 +1661,10 @@ class Model:
 		d_amp = np.random.normal(0., scale=self.temp_amplitude_sigs[self.gdat.template_order[template_idx]])
 
 		band_weights = get_band_weights(temp_band_idxs) # this function returns normalized weights
-		#print(band_weights)
-		#exit()
 		# uncomment to institute DELTA FN PRIOR SZE @ 250 micron
 		if self.gdat.template_order[template_idx] == 'sze':
 			band_weights[0] = 0.
 			band_weights /= np.sum(band_weights)
-
 
 		band_idx = int(np.random.choice(temp_band_idxs, p=band_weights))
 
@@ -2081,9 +2075,9 @@ class Model:
 		elif not splitsville and idx_reg.size > 1: # need two things to merge!
 
 			nms = int(min(nms, idx_reg.size/2))
-			idx_move = np.empty(nms, dtype=int)
-			idx_kill = np.empty(nms, dtype=int)
-			choosable = np.zeros(self.max_nsrc, dtype=bool)
+			idx_move = np.empty(nms, dtype=np.int)
+			idx_kill = np.empty(nms, dtype=np.int)
+			choosable = np.zeros(self.max_nsrc, dtype=np.bool)
 			choosable[idx_reg] = True
 			nchoosable = float(idx_reg.size)
 			invpairs = np.empty(nms)
@@ -2435,11 +2429,6 @@ class lion():
 				for movestr in ['movestar', 'birth_death', 'merge_split']:
 					self.gdat.sample_delay_byprop[movestr] = self.gdat.point_src_delay
 
-			# temp_sample_delay controls when all point source proposals begin
-			if self.gdat.temp_sample_delay is not None:
-				for template in ['template']:
-					self.gdat.sample_delay_byprop[template] = self.gdat.temp_sample_delay
-
 			self.gdat.timestr = time.strftime("%Y%m%d-%H%M%S")
 
 			# power law exponents equal to 1 in double power law will cause a numerical error.
@@ -2472,8 +2461,7 @@ class lion():
 			if self.gdat.template_names is not None:
 				for i, temp_name in enumerate(self.gdat.template_names):		
 					for b, band in enumerate(self.gdat.bands):
-						print(temp_name)
-						if band in self.gdat.template_band_idxs_dict[temp_name]:
+						if band in template_band_idxs[temp_name]:
 							self.gdat.template_band_idxs[i,b] = band
 						else:
 							self.gdat.template_band_idxs[i,b] = None
@@ -2556,9 +2544,7 @@ class lion():
 					median_val = np.median(self.data.data_array[b])
 					self.gdat.bkg_level[b] = median_val # background will initially be biased high by point sources
 				
-			print('Initial background levels set to ', self.gdat.bkg_level)
-			#exit()
-		
+				print('Initial background levels set to ', self.gdat.bkg_level)
 
 
 		if self.gdat.save_outputs:

@@ -1,5 +1,5 @@
 from fast_astrom import *
-import pcat_config as config
+import config
 import numpy as np
 from astropy.convolution import Gaussian2DKernel
 from image_eval import psf_poly_fit
@@ -143,20 +143,17 @@ def load_in_map(gdat, file_path=None, band=0, astrom=None, show_input_maps=False
 		verbprint(gdat.verbtype, 'Loading from ', gdat.band_dict[band], verbthresh=1)
 		astrom.load_wcs_header_and_dim(file_path, round_up_or_down=gdat.round_up_or_down)
 
-	print('check here', gdat.tail_name)
-	print('check here', gdat.dataname)
+
 	if file_path is None:
-		print('file is none')
 		if gdat.file_path is None:
 			file_path = config.data_path+gdat.dataname+'/'+gdat.tail_name+'.fits'
 		else:
 			file_path = gdat.file_path
 		file_path = file_path.replace('PSW', 'P'+str(gdat.band_dict[band])+'W')
-	print('Check file path here:', file_path)
+
 	#by loading in the image this way, we can compose maps from several components, e.g. noiseless CIB + noise realization
 	
 	if file_path is not None:
-		print('file is NOT none')
 		data_file = fits.open(file_path)
 	elif gdat.im_fpath is not None:
 		data_file = fits.open(gdat.im_fpath)
@@ -334,7 +331,7 @@ class pcat_data():
 
 		self.fast_astrom = wcs_astrometry(self.gdat.auto_resize, nregion=nregion)
 
-		self.gdat.imszs, self.gdat.imszs_orig = [np.zeros((self.gdat.nbands, 2)).astype(int) for x in range(2)]
+		self.gdat.imszs, self.gdat.imszs_orig = [np.zeros((self.gdat.nbands, 2)).astype(np.int) for x in range(2)]
 		self.gdat.x_max_pivot_list, self.gdat.y_max_pivot_list, self.gdat.regsizes = [np.zeros((self.gdat.nbands)).astype(int) for x in range(3)]
 		self.gdat.bounds = np.zeros((self.gdat.nbands, 2, 2))
 
@@ -360,12 +357,9 @@ class pcat_data():
 		
 		resized_templates = []
 		for template in template_list:
-			if template is None:
-				continue
-			else:
-				resized_template = np.zeros(shape=image_size)
-				resized_template[:image.shape[0], : image.shape[1]] = template[:crop_size_x, :crop_size_y]
-				resized_templates.append(resized_template)
+			resized_template = np.zeros(shape=image_size)
+			resized_template[:image.shape[0], : image.shape[1]] = template[:crop_size_x, :crop_size_y]
+			resized_templates.append(resized_template)
 
 		return image_size, resized_image, resized_unc, resized_mask, resized_templates
 
@@ -375,9 +369,7 @@ class pcat_data():
 		if sb_scale_facs is None:
 			sb_scale_facs = [None for x in range(len(self.gdat.template_names))]
 
-		template_list = []
 		for t, template_name in enumerate(self.gdat.template_names):
-			print('Check Bands', self.gdat.band_dict[band])
 
 			verbprint(self.gdat.verbtype, 'template name is ', template_name, verbthresh=1)
 			# if self.gdat.band_dict[band] in config.template_bands_dict[template_name]:
@@ -385,9 +377,9 @@ class pcat_data():
 			if self.gdat.band_dict[band] in self.gdat.template_bands_dict[template_name]:
 				# verbprint(self.gdat.verbtype, 'Band, template band, lambda: '+str(self.gdat.band_dict[band])+', '+str(config.template_bands_dict[template_name])+', '+str(self.gdat.lam_dict[self.gdat.band_dict[band]]), verbthresh=1)
 				verbprint(self.gdat.verbtype, 'Band, template band, lambda: '+str(self.gdat.band_dict[band])+', '+str(self.gdat.template_bands_dict[template_name])+', '+str(self.gdat.lam_dict[self.gdat.band_dict[band]]), verbthresh=1)
-				print('Look HERE!!!', template_file_names)
+
 				template = fits.open(template_file_names[t])[template_name].data
-				if self.gdat.show_input_maps:
+				if show_input_maps:
 					plot_single_map(template, title=template_name, save_bool=self.gdat.save_input_plots,\
 								 save_dir=self.gdat.input_map_dir, filename='template_'+str(template_name)+'_band'+str(band)+'.'+self.gdat.fig_filetype)
 
@@ -463,26 +455,20 @@ class pcat_data():
 
 			self.fast_astrom.dims[b] = (big_dim, big_dim)
 
-			template_list = []
-			template_file_name = [file_name]
+			template_list = [] 
 			if self.gdat.n_templates > 0:
 				verbprint(self.gdat.verbtype, 'Loading signal templates..', verbthresh=1)
-				if self.gdat.scale_templates:
-					template_list = self.load_sig_templates(band, template_file_name, sb_scale_facs=self.gdat.sb_scale_facs)
-				else:
-					template_list = self.load_sig_templates(band, template_file_name, sb_scale_facs=None)
+				template_list = self.load_sig_templates(band, template_file_names, sb_scale_facs=sb_scale_facs)
 
-				if self.gdat.inject_templates:
-					for t, template_inject in enumerate(template_list):
-						print(template_inject)
+				for t, template_inject in enumerate(template_list):
 
-						verbprint(self.gdat.verbtype, 'Adding template to image..', verbthresh=1)
-						image += template_inject
+					verbprint(self.gdat.verbtype, 'Adding template to image..', verbthresh=1)
+					image += template_inject
 
-						if show_input_maps:
-							f = plot_multipanel([template_inject, image], [self.gdat.template_names[t], 'image + '+self.gdat.template_names[t]],\
-												figsize=(8,4), cmap='Greys', save_bool=self.gdat.save_input_plots,\
-									save_dir=self.gdat.input_map_dir, filename=str(self.gdat.template_names[t])+'_template_inject_image_band'+str(band)+'.'+self.gdat.fig_filetype)
+					if show_input_maps:
+						f = plot_multipanel([template_inject, image], [self.gdat.template_names[t], 'image + '+self.gdat.template_names[t]],\
+											 figsize=(8,4), cmap='Greys', save_bool=gdat.save_input_plots,\
+								 save_dir=gdat.input_map_dir, filename=str(self.gdat.template_names[t])+'_template_inject_image_band'+str(band)+'.'+gdat.fig_filetype)
 
 			if b > 0:
 				verbprint(self.gdat.verbtype, 'Moving to band '+str(band)+'..', verbthresh=1)
@@ -512,7 +498,7 @@ class pcat_data():
 			width, height = image_size[0], image_size[1]
 
 			if b > 0 and int(x_max_pivot) < resized_image.shape[0]:
-				verbprint(self.gdat.verbtype,'Setting pixels in band '+str(b)+' not in band 0 FOV to zero..', verbthresh=1)
+				verbprint('Setting pixels in band '+str(b)+' not in band 0 FOV to zero..')
 				resized_image[resized_mask==0] = 0.
 				resized_unc[resized_mask==0] = 0.
 
@@ -537,10 +523,8 @@ class pcat_data():
 			resized_image[weight==0] = 0.
 
 			# remove this?
-			#print('!!!!!!!!!!!!!!!!', self.gdat.mean_offsets[b])
 			self.data_array.append(resized_image.astype(np.float32)-self.gdat.mean_offsets[b]) # constant offset, will need to change
-			#else:
-			#self.data_array.append(resized_image.astype(float) - 0)
+			# self.data_array.append(resized_image.astype(float))
 			
 			self.template_array.append(resized_templates)
 
@@ -559,7 +543,7 @@ class pcat_data():
 			
 			if self.gdat.psf_postage_stamps is not None:
 				verbprint(self.gdat.verbtype, 'Using psf postage stamp/s provided..', verbthresh=0)
-				verbprint(self.gdat.verbtype, 'NOTE this assumes psf_postage_stamps have been upsampled by factor '+str(self.gdat.nbin)+' already..', verbthresh=0)
+				verbprint('NOTE this assumes psf_postage_stamps have been upsampled by factor '+str(self.gdat.nbin)+' already..')
 				psf = self.gdat.psf_postage_stamps[b].copy()
 				nbin = self.gdat.nbin
 				nc = nbin**2

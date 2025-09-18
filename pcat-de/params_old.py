@@ -15,19 +15,16 @@ These parameters can be broken down into the following groups:
  '''
 
 import numpy as np
-import pcat_config
+import config
 
 # ---------------------- parameters unique to SPIRE data -----------------------------
 
-#sb_conversion_dict = dict({'S': 86.29e-4, 'M':16.65e-3, 'L':34.52e-3})
-sb_conversion_dict = dict({'S': 0.011031926394987093, 'M': 0.01953850061546277, 'L': 0.04240882103477524})
-#temp_mock_amps_dict = dict({'S':0.03, 'M': 0.2, 'L': 0.8}) # MJy/sr, this was for RXJ1347
-temp_mock_amps_dict = None # MJy/sr, this was for RXJ1347
+sb_conversion_dict = dict({'S': 86.29e-4, 'M':16.65e-3, 'L':34.52e-3})
+temp_mock_amps_dict = dict({'S':0.03, 'M': 0.2, 'L': 0.8}) # MJy/sr, this was for RXJ1347
 
 band_dict = dict({0:'S',1:'M',2:'L'}) # for accessing different wavelength filenames
 lam_dict = dict({'S':250, 'M':350, 'L':500})
-#pixsize_dict = dict({'S':6., 'M':8., 'L':12.})
-pixsize_dict = dict({'S':6., 'M':6., 'L':6.})
+pixsize_dict = dict({'S':6., 'M':8., 'L':12.})
 
 spire_bands = ['S', 'M', 'L']
 nbl = np.arange(len(spire_bands))
@@ -36,16 +33,13 @@ template_bands_dict = dict({'sze':['M', 'L']}) # should just integrate with the 
 
 template_band_idxs_dict = dict({'sze':nbl, 'cib':nbl})
 
-#fourier_band_idxs = [0,1,2] #None # if left unspecified, assume user wants Fourier component templates fit across all bands
-fourier_band_idxs = None
-#temp_amplitude_sigs = dict({'sze':0.001, 'fc':0.001, 'binned_cib':0.001}) # binned cib
+fourier_band_idxs = None # if left unspecified, assume user wants Fourier component templates fit across all bands
 temp_amplitude_sigs = dict({'sze':0.001, 'fc':0.001, 'binned_cib':0.0005}) # binned cib
 sz_amp_sig = None
 
-color_mus = dict({'S-M':0.0, 'M-L':0.5, 'L-S':0.5, 'M-S':0.0, 'S-L':-0.5, 'L-M':-0.5}) #maybe try to change prior based on location in the image
+color_mus = dict({'S-M':0.0, 'M-L':0.5, 'L-S':0.5, 'M-S':0.0, 'S-L':-0.5, 'L-M':-0.5})
 color_sigs = dict({'S-M':1.5, 'M-L':1.5, 'L-S':1.5, 'M-S':1.5, 'S-L':1.5, 'L-M':1.5}) #very broad color prior
-#check the priors with sims, use the sims with tuners
-#need to be sure that the mocks have the same bias as the observed maps before we use them to train the color prior
+
 
 # ----------------------------------- COMPUTATIONAL ROUTINE OPTIONS -------------------------------
 
@@ -58,8 +52,8 @@ openblas=False
 
 # Configure these for individual directory structure
 # config
-base_path = pcat_config.base_path
-result_basedir = pcat_config.result_basedir 
+base_path = config.base_path
+result_basedir = config.result_basedir
 
 data_fpaths = None
 # the tail name can be configured when reading files from a specific dataset if the name space changes.
@@ -71,8 +65,8 @@ file_path = None
 
 im_fpath = None
 err_fpath = None
-# filepath for previous catalog if using as an initial state. loads in .npz files
-load_state_timestr = None #figure this out here!!!
+# filepath for previous catalog if using as an initial state. loads in .npy files
+load_state_timestr = None 
 # set flag to True if you want posterior plots/catalog samples/etc from run saved
 save_outputs = True
 # initialize data object 
@@ -98,8 +92,7 @@ noise_fpath = None # ? track down
 # Full width at half maximum for the PSF of the instrument/observation. Currently assumed to be Gaussian, but other 
 # PCAT implementations have used a PSF template, so perhaps a more detailed PSF model could be added as another FITS header
 psf_pixel_fwhm = 3.0
-#psf_fwhms = None
-psf_fwhms = [2.999999999999997, 4.1666666666666625, 5.999999999999994]
+psf_fwhms = None
 
 # TBD
 psf_postage_stamps = None
@@ -140,8 +133,7 @@ print_movetypes = dict({'movestar':'P *','birth_death':'BD *','merge_split':'MS 
 # temporary debug
 # moveweight_byprop = dict({'movestar':80., 'birth_death':0., 'merge_split':0., 'bkg':10., 'template':40., 'fc':40.})
 
-#moveweight_byprop = dict({'movestar':20., 'birth_death':20., 'merge_split':20., 'bkg':5., 'template':20., 'fc':10.})
-moveweight_byprop = dict({'movestar':60., 'birth_death':15., 'merge_split':15., 'bkg':40., 'template':40., 'fc':200.})
+moveweight_byprop = dict({'movestar':80., 'birth_death':60., 'merge_split':60., 'bkg':10., 'template':40., 'fc':40.})
 # number of thinned samples before proposals of various types are included in the fit. The default is for these to all be zero.
 sample_delay_byprop = dict({'movestar':0, 'birth_death':0, 'merge_split':0, 'bkg':0, 'template':0, 'fc':0}) 
 
@@ -152,9 +144,7 @@ birth_death = True
 merge_split = True
 
 # scalar factor in regularization prior, scales dlogL penalty when adding/subtracting a source
-#alph = 1.0
-alph = 1.5 #we want to try and increase this penalty
-#alph = 3.0
+alph = 1.0
 # if set to True, computes parsimony prior using F-statistic, nominal_nsrc and the number of pixels in the images
 F_statistic_alph = False
 # scale for merge proposal i.e. how far you look for neighbors to merge
@@ -170,27 +160,25 @@ nregion = 5
 # used when splitting sources and determining colors of resulting objects
 split_col_sig = 0.2
 # power law type
-flux_prior_type = 'double_power_law'
+flux_prior_type = 'single_power_law'
 # number counts single power law slope for sources
 truealpha = 3.0
 # minimum flux allowed in fit for sources (in Jy)
-trueminf = 0.006
+trueminf = 0.005
 # two parameters for double power law, one for pivot flux density
 alpha_1 = 1.01
-alpha_2 = 2.88
+alpha_2 = 3.5
 pivot_dpl = 0.01
 
 # # these two, if specified, should be dictionaries with the color prior mean and width (assuming Gaussian)
 # color_mus = None
 # color_sigs = None
 
-#temp_prop_sig_fudge_facs = None
-temp_prop_sig_fudge_facs = [1.0, 2.5, 2.5]
+temp_prop_sig_fudge_facs = None
 
 # if specified, nsrc_init is the initial number of sources drawn from the model. otherwise a random integer between 1 and max_nsrc is drawn
 nsrc_init = None
-#err_f_divfac = 2.
-err_f_divfac = 8.660254037844387
+err_f_divfac = 2.
 
 # if specified, delays all point source modeling until point_src_delay samples have passed. 
 point_src_delay = None
@@ -199,31 +187,27 @@ point_src_delay = None
 # ---------------------------------- BACKGROUND PARAMS --------------------------------
 
 # bkg_level is used now for the initial background level for each band
-#bkg_level = None
 bkg_level = None
 # mean offset can be used if one wants to subtract some initial level from the input map, but setting the bias to the value 
 # is functionally the same
-mean_offsets = [0., 0., 0.]
+mean_offsets = None
 # boolean determining whether to use background proposals
 float_background = True
 # bkg_sig_fac scales the width of the background proposal distribution
-#bkg_sig_fac = [5., 10., 15.]
-bkg_sig_fac = [20.0, 20.0, 20.0]
+bkg_sig_fac = 10.
 # if set to True, includes Gaussian prior on background amplitude with mean bkg_mus[bkg_idx] and scale bkg_prior_sig. this is not used in practice but could be useful
 dc_bkg_prior = False
 # background amplitude Gaussian prior mean [in Jy/beam]
 bkg_prior_mus = None
 # background amplitude Gaussian prior width [in Jy/beam]
-bkg_prior_sig = 0.01
-
-bkg_moveweight = 40.
+bkg_prior_sig = None
 
 # ---------------------------------- TEMPLATE PARAMS ----------------------------------------
 
 # boolean determining whether to float emission template amplitudes, e.g. for SZ or lensing templates
 float_templates = False
 # names of templates to use in fit, I think there will be a separate template folder where the names specify which files to read in
-template_names = ['sze']
+template_names = None
 
 n_templates = 0
 
@@ -232,15 +216,9 @@ init_template_amplitude_dicts = None
 # if template file name is not None then it will grab the template from this path and replace PSW with appropriate band
 template_filename = None
 
-# if specified, delays all template modeling until temp_sample_delay samples have passed. 
-temp_sample_delay = None
-
 # boolean which when True results in a delta function color prior for dust templates 
 delta_cp_bool = False
 
-inject_templates = False
-
-scale_templates = False
 # inject_diffuse_comp = False
 # diffuse_comp_path = None
 # diffuse_comp_fpaths = None
@@ -273,29 +251,29 @@ fc_rel_amps = None
 dfc_prob = 1.
 
 # this specifies the order of the fourier expansion. the number fourier components that are fit for is equal to 4 x fourier_order**2
-fourier_order = 6
+fourier_order = 10
 
 # this is for perturbing the relative amplitudes of a fixed Fourier comp model across bands
-fourier_amp_sig = 0.001
+fourier_amp_sig = 0.0005
 
 # perturb multiple FCs at once? this doesn't appear to change things much 
 n_fc_perturb = 1
 
 # specifies the proposal distribution width for the largest spatial mode of the Fourier component model, or for all of them if fc_prop_alpha=None
-fc_amp_sig = 0.0005
+fc_amp_sig = None
 
 bkg_moore_penrose_inv = False
 
-ridge_fac = 10.0
+ridge_fac = None
 
 # if specified, ridge factor is proportional to wavenumber when added to diagonal model covariance matrix, effectively a power spectrum prior on diffuse component
 ridge_fac_alpha = 1.3
 
 # number of times to apply FC marg during burn in
-n_marg_updates = 10
+n_marg_updates = 50
 
 # number of thinned samples between each marginalization step
-fc_marg_period = 5
+fc_marg_period = 20
 
 # if True, PCAT couples Fourier component proposals with change in point source fluxes
 coupled_fc_prop = False
@@ -308,11 +286,10 @@ coupled_fc_prop_frac = 0.5
 # interactive backend should be loaded before importing pyplot
 visual = False
 # used for visual mode
-weighted_residual = False
+weighted_residual = True
 # panel list controls what is shown in six panels plotted by PCAT intermittently when visual=True  
 # panel_list = ['data0', 'model0', 'residual0', 'data_zoom0', 'dNdS0', 'residual_zoom0']
-#panel_list = ['data0', 'model0', 'residual0']
-panel_list = ['data0', 'model0', 'residual0', 'fourier_bkg0', 'residual_zoom0', 'dNdS0']
+panel_list = ['data0', 'model0', 'residual0']
 
 # plots visual frames every "plot_sample_period" thinned samples
 plot_sample_period = 1
@@ -339,13 +316,13 @@ show_input_maps=False
 save_input_plots=True
 fig_filetype = 'pdf'
 
-n_frames = 10
+n_frames = 0
 
 # ----------------------------------------- CONDENSED CATALOG --------------------------------------
 
 # if True, takes last n_condensed_samp catalog realizations and groups together samples to produce a marginalized 
 # catalog with reported uncertainties for each source coming from the several realizations
-generate_condensed_catalog = True
+generate_condensed_catalog = False
 # number of samples to construct condensed catalog from. Condensing the catalog can take a long time, so I usually choose like 100 for a "quick" answer
 # and closer to 300 for a science-grade catalog.
 n_condensed_samp = 100

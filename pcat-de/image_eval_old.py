@@ -31,7 +31,7 @@ def psf_poly_fit(psf0, nbin):
 
         return cf.reshape(cf.shape[0], cf.shape[1]*cf.shape[2])
 
-def image_model_eval(x, y, f, back, imsz, nc, cf, regsize=None, margin=0, offsetx=0, offsety=0, weights=None, ref=None, lib=None, template=None, rtype=None):
+def image_model_eval(x, y, f, back, imsz, nc, cf, regsize=None, margin=0, offsetx=0, offsety=0, weights=None, ref=None, lib=None, template=None):
     assert x.dtype == np.float32
     assert y.dtype == np.float32
     # assert f.dtype == np.float32
@@ -43,17 +43,6 @@ def image_model_eval(x, y, f, back, imsz, nc, cf, regsize=None, margin=0, offset
     if weights is None:
         weights = np.full(imsz, 1., dtype=np.float32)
 
-    if rtype == 5:
-        for i in range(len(weights)):
-            for j in range(len(weights[0])):
-                cent_dist_x = np.abs(50 - i)
-                cent_dist_y = np.abs(50 - j)
-                r_pix = np.sqrt(cent_dist_x**2 + cent_dist_y**2)
-                if r_pix <= 10:
-                    weights[i][j] = 0
-                else:
-                     continue
-
     if regsize is None:
         regsize = max(imsz[0], imsz[1])
 
@@ -64,7 +53,7 @@ def image_model_eval(x, y, f, back, imsz, nc, cf, regsize=None, margin=0, offset
     f = f.compress(goodsrc)
 
     nstar = x.size
-    rad = nc//2 # 12 for nc = 25
+    rad = nc/2 # 12 for nc = 25
 
     nregy = int(imsz[1]/regsize + 1) # assumes imsz % regsize = 0?
     nregx = int(imsz[0]/regsize + 1)
@@ -75,7 +64,7 @@ def image_model_eval(x, y, f, back, imsz, nc, cf, regsize=None, margin=0, offset
     dy = iy - y
 
     dd = np.column_stack((np.full(nstar, 1., dtype=np.float32), dx, dy, dx*dx, dx*dy, dy*dy, dx*dx*dx, dx*dx*dy, dx*dy*dy, dy*dy*dy)).astype(np.float32) * f[:, None]
-    
+
     if lib is None:
         rad = nc//2
         # image = np.full((int(imsz[1]+2*rad+1),int(imsz[0]+2*rad+1)), back, dtype=np.float32)
@@ -85,11 +74,8 @@ def image_model_eval(x, y, f, back, imsz, nc, cf, regsize=None, margin=0, offset
         recon = np.zeros((nstar,nc,nc), dtype=np.float32)
         recon[:,:,:] = recon2[:,:,:]
         for i in range(nstar):
-            if nc%2>0:
-                image[iy[i]:iy[i]+rad+rad+1,ix[i]:ix[i]+rad+rad+1] += recon[i,:,:]
-            else:
-                image[iy[i]:iy[i]+rad+rad,ix[i]:ix[i]+rad+rad] += recon[i,:,:]
-
+            # image[iy[i]:int(iy[i]+rad+rad+1),ix[i]:int(ix[i]+rad+rad+1)] += recon[i,:,:]
+            image[iy[i]:iy[i]+rad+rad+1,ix[i]:ix[i]+rad+rad+1] += recon[i,:,:]
         image = image[rad:imsz[1]+rad,rad:imsz[0]+rad]
 
         if ref is not None:
